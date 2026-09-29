@@ -310,7 +310,7 @@ func (l *loader) Reinitialize(ctx context.Context, lnc *config.Config, tunnelCon
 
 	// Startup relies on not returning an error here, maybe something we
 	// can fix in the future.
-	_ = l.templateCache.UpdateDatapathHash(lnc)
+	_ = l.templateCache.UpdateDatapathHash(ctx, lnc)
 
 	var internalIPv4, internalIPv6 net.IP
 	if option.Config.EnableIPv4 {

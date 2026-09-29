@@ -193,7 +193,9 @@ func compile(ctx context.Context, logger *slog.Logger, prog *progInfo, dir *dire
 	compileCmd, cancelCompile := exec.WithCancel(ctx, compiler, compileArgs...)
 	defer cancelCompile()
 
-	output, err := os.Create(prog.AbsoluteOutput(dir))
+	// Write to a temporary file so that a killed compiler leaves no partial object.
+	outputPath := prog.AbsoluteOutput(dir)
+	output, err := os.Create(outputPath + ".tmp")
 	if err != nil {
 		return "", err
 	}
@@ -245,7 +247,13 @@ func compile(ctx context.Context, logger *slog.Logger, prog *progInfo, dir *dire
 		)
 	}
 
-	return output.Name(), nil
+	if err := output.Sync(); err != nil {
+		return "", err
+	}
+	if err := os.Rename(output.Name(), outputPath); err != nil {
+		return "", err
+	}
+	return outputPath, nil
 }
 
 // compileDatapath invokes the compiler and linker to create all state files for
